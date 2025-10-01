@@ -5,6 +5,7 @@ export class InputObserver {
   private promptManager: PromptManager;
   private observer: MutationObserver | null = null;
   private inputListeners: Map<HTMLTextAreaElement, (event: Event) => void> = new Map();
+  private contentEditableListeners: Map<HTMLElement, (event: Event) => void> = new Map();
 
   constructor() {
     this.promptManager = new PromptManager();
@@ -21,8 +22,11 @@ export class InputObserver {
             this.attachListenersToElement(element);
             
             // Also check child elements
-            const inputs = element.querySelectorAll('textarea');
-            inputs.forEach(input => this.attachListenersToElement(input));
+            const textareas = element.querySelectorAll('textarea');
+            textareas.forEach(input => this.attachListenersToElement(input));
+            
+            const contentEditables = element.querySelectorAll('[contenteditable="true"]');
+            contentEditables.forEach(editable => this.attachListenersToElement(editable));
           }
         });
       });
@@ -38,8 +42,11 @@ export class InputObserver {
   }
 
   private attachListenersToExistingElements(): void {
-    const inputs = document.querySelectorAll('textarea');
-    inputs.forEach(input => this.attachListenersToElement(input));
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(input => this.attachListenersToElement(input));
+    
+    const contentEditables = document.querySelectorAll('[contenteditable="true"]');
+    contentEditables.forEach(editable => this.attachListenersToElement(editable));
   }
 
   private attachListenersToElement(element: Element): void {
@@ -49,13 +56,23 @@ export class InputObserver {
         return;
       }
 
-      const listener = this.createInputListener(element);
+      const listener = this.createTextAreaListener(element);
       this.inputListeners.set(element, listener);
       element.addEventListener('input', listener);
+    } else if (element instanceof HTMLElement && element.contentEditable === 'true') {
+      // Skip if already has listener
+      if (this.contentEditableListeners.has(element)) {
+        return;
+      }
+
+      const listener = this.createContentEditableListener(element);
+      this.contentEditableListeners.set(element, listener);
+      element.addEventListener('input', listener);
+      element.addEventListener('keyup', listener);
     }
   }
 
-  private createInputListener(element: HTMLTextAreaElement): (event: Event) => void {
+  private createTextAreaListener(element: HTMLTextAreaElement): (event: Event) => void {
     return async (event: Event) => {
       const target = event.target as HTMLTextAreaElement;
       const value = target.value;
@@ -87,7 +104,75 @@ export class InputObserver {
     };
   }
 
-  private showFeedback(element: HTMLTextAreaElement, message: string): void {
+  private createContentEditableListener(element: HTMLElement): (event: Event) => void {
+    return async (event: Event) => {
+      const target = event.target as HTMLElement;
+      const textContent = target.textContent || '';
+      
+      // Look for keyword patterns (::keyword)
+      const keywordMatch = textContent.match(/::\w+$/);
+      
+      if (keywordMatch) {
+        const keyword = keywordMatch[0];
+        
+        try {
+          const prompt = await this.promptManager.getPromptByKeyword(keyword);
+          
+          if (prompt) {
+            // Get current selection
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              
+              // Find the text node containing the keyword
+              const walker = document.createTreeWalker(
+                target,
+                NodeFilter.SHOW_TEXT
+              );
+              
+              let textNode: Text | null = null;
+              let node: Node | null = null;
+              
+              while (node = walker.nextNode()) {
+                if (node.textContent && node.textContent.includes(keyword)) {
+                  textNode = node as Text;
+                  break;
+                }
+              }
+              
+              if (textNode) {
+                const startIndex = textNode.textContent!.lastIndexOf(keyword);
+                const endIndex = startIndex + keyword.length;
+                
+                // Create new range for replacement
+                const newRange = document.createRange();
+                newRange.setStart(textNode, startIndex);
+                newRange.setEnd(textNode, endIndex);
+                
+                // Replace the keyword with prompt content
+                newRange.deleteContents();
+                newRange.insertNode(document.createTextNode(prompt.content));
+                
+                // Clear selection and set cursor to end
+                selection.removeAllRanges();
+                const endRange = document.createRange();
+                endRange.setStartAfter(newRange.endContainer);
+                endRange.collapse(true);
+                selection.addRange(endRange);
+                
+                // Show feedback
+                this.showFeedback(target, 'Prompt inserted!');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error retrieving prompt:', error);
+        }
+      }
+    };
+  }
+
+  private showFeedback(element: HTMLElement, message: string): void {
     // Create a temporary feedback element
     const feedback = document.createElement('div');
     feedback.textContent = message;
@@ -129,6 +214,13 @@ export class InputObserver {
       element.removeEventListener('input', listener);
     });
     this.inputListeners.clear();
+
+    // Remove all contenteditable listeners
+    this.contentEditableListeners.forEach((listener, element) => {
+      element.removeEventListener('input', listener);
+      element.removeEventListener('keyup', listener);
+    });
+    this.contentEditableListeners.clear();
   }
 
   public restartObserving(): void {
