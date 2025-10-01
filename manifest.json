@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "description": "PROMPTNEST is a browser extension that helps you create and manage your prompts.",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "contextMenus"
   ],
   "background": {
     "service_worker": "background.js"
