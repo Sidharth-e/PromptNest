@@ -37,15 +37,16 @@ export class CustomAlert {
 		  .pn-alert-backdrop {
 		    position: fixed;
 		    inset: 0;
-		    background: rgba(0,0,0,0.35);
+		    background: transparent;
 		    display: flex;
-		    align-items: center;
+		    align-items: flex-start;
 		    justify-content: center;
 		    z-index: 10002;
 		    opacity: 0;
 		    visibility: hidden;
 		    transition: opacity 0.2s ease, visibility 0.2s ease;
 			font-family: var(--pn-font);
+			padding-top: 16px;
 		  }
 		  .pn-alert-backdrop.pn-open { opacity: 1; visibility: visible; }
 
@@ -56,7 +57,7 @@ export class CustomAlert {
 		    border-radius: 10px;
 		    width: calc(min(92vw, 440px));
 		    box-shadow: var(--pn-shadow);
-		    transform: translateY(12px);
+		    transform: translateY(-12px);
 		    opacity: 0;
 		    transition: transform 0.2s ease, opacity 0.2s ease;
 		  }
