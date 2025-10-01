@@ -1,4 +1,4 @@
-// UI Component for Prompt Management
+// UI Component for Prompt Management (Refactored for Full Right-Side Slide-in)
 import { PromptManager, Prompt } from '../services/PromptManager';
 
 export class PromptUI {
@@ -27,12 +27,12 @@ export class PromptUI {
         --pn-primary-dark: #357ABD;
         --pn-background: #f7f9fc;
         --pn-surface: #ffffff;
-        --pn-text: #333333; /* This is the default dark text color */
+        --pn-text: #333333;
         --pn-text-secondary: #666666;
         --pn-border: #e0e6ed;
         --pn-success: #4caf50;
         --pn-danger: #f44336;
-        --pn-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        --pn-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
         --pn-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       }
       
@@ -40,26 +40,49 @@ export class PromptUI {
           box-sizing: border-box;
       }
 
+      /* Main Modal Backdrop */
       #prompt-nest-extension {
         position: fixed;
         top: 0;
-        right: 0;
-        height: 100vh;
-        background: var(--pn-background);
-        box-shadow: var(--pn-shadow);
-        z-index: 10000;
-        font-family: var(--pn-font);
-        width: 380px;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 9999;
         display: flex;
-        flex-direction: column;
-        transform: translateX(100%);
-        transition: transform 0.25s ease-in-out;
-        border-left: 1px solid var(--pn-border);
-        color: var(--pn-text); /* Ensures all text defaults to dark */
+        align-items: center; 
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+        font-family: var(--pn-font);
       }
 
       #prompt-nest-extension.pn-open {
-        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Main Modal Content Box - Updated for full slide-from-right animation */
+      .pn-main-modal {
+        background: var(--pn-background);
+        border-radius: 12px;
+        box-shadow: var(--pn-shadow);
+        width: 90%;
+        max-width: 800px;
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        color: var(--pn-text);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(100vw); /* Start fully off-screen to the right */
+        transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-out;
+      }
+
+      #prompt-nest-extension.pn-open .pn-main-modal {
+        opacity: 1;
+        transform: translateX(0); /* Animate to final centered position */
       }
 
       /* Header */
@@ -67,255 +90,134 @@ export class PromptUI {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px 20px;
+        padding: 16px 24px;
         border-bottom: 1px solid var(--pn-border);
         background: var(--pn-surface);
         flex-shrink: 0;
       }
-      .pn-title {
-        margin: 0;
-        color: var(--pn-primary);
-        font-size: 20px;
-        font-weight: 600;
-      }
-      .pn-header-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+      .pn-title { margin: 0; color: var(--pn-primary); font-size: 20px; font-weight: 600; }
+      .pn-header-actions { display: flex; align-items: center; gap: 8px; }
       .pn-close-button {
-        background: none;
-        border: none;
-        font-size: 28px;
-        cursor: pointer;
-        color: var(--pn-text-secondary);
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background-color 0.2s, color 0.2s;
-        line-height: 1;
+        background: none; border: none; font-size: 28px; cursor: pointer; color: var(--pn-text-secondary);
+        width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; transition: background-color 0.2s, color 0.2s; line-height: 1;
       }
-      .pn-close-button:hover {
-        background-color: #eef2f7;
-        color: var(--pn-text);
-      }
+      .pn-close-button:hover { background-color: #eef2f7; color: var(--pn-text); }
 
       /* Form Container (Collapsible) */
       .pn-form-container {
-          background: var(--pn-surface);
-          border-bottom: 1px solid var(--pn-border);
-          padding: 0 20px;
-          margin: 0;
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+        background: var(--pn-surface);
+        border-bottom: 1px solid var(--pn-border);
+        padding: 0 24px;
+        margin: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
       }
-      .pn-form-container.active {
-          padding: 20px;
-          max-height: 400px; /* Adjust as needed */
-      }
-      .pn-form h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--pn-text);
-      }
-      .pn-form label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 13px;
-        color: var(--pn-text-secondary);
-        font-weight: 500;
-      }
+      .pn-form-container.active { padding: 20px 24px; max-height: 500px; }
+      .pn-form h3 { margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: var(--pn-text); }
+      .pn-form label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--pn-text-secondary); font-weight: 500; }
       .pn-input, .pn-textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid var(--pn-border);
-        border-radius: 6px;
-        font-size: 14px;
-        margin-bottom: 12px;
+        width: 100%; padding: 10px; border: 1px solid var(--pn-border);
+        border-radius: 6px; font-size: 14px; margin-bottom: 12px;
         transition: border-color 0.2s, box-shadow 0.2s;
-        font-family: var(--pn-font);
-        color: var(--pn-text); /* Explicitly set input color */
+        font-family: var(--pn-font); color: var(--pn-text);
       }
-      .pn-input:focus, .pn-textarea:focus {
-        outline: none;
-        border-color: var(--pn-primary);
-        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-      }
-      .pn-textarea {
-        min-height: 70px;
-        resize: vertical;
-      }
+      .pn-input:focus, .pn-textarea:focus { outline: none; border-color: var(--pn-primary); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); }
+      .pn-textarea { min-height: 80px; resize: vertical; }
 
       /* Buttons */
       .pn-button {
-        border: none;
-        padding: 10px 16px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s, transform 0.1s;
+        border: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;
+        cursor: pointer; transition: background-color 0.2s, transform 0.1s;
       }
-      .pn-button:active {
-        transform: translateY(1px);
-      }
-      .pn-button-primary {
-        background: var(--pn-primary);
-        color: white;
-      }
-      .pn-button-primary:hover {
-        background: var(--pn-primary-dark);
-      }
-       .pn-button-secondary {
-        background: #eef2f7;
-        color: var(--pn-text);
-      }
-       .pn-button-secondary:hover {
-        background: #e0e6ed;
-      }
+      .pn-button:active { transform: translateY(1px); }
+      .pn-button-primary { background: var(--pn-primary); color: white; }
+      .pn-button-primary:hover { background: var(--pn-primary-dark); }
+      .pn-button-secondary { background: #eef2f7; color: var(--pn-text); }
+      .pn-button-secondary:hover { background: #e0e6ed; }
 
       /* Prompts List */
-      #prompts-list {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 12px 20px;
-      }
+      #prompts-list { flex-grow: 1; overflow-y: auto; padding: 12px 24px; }
       #prompts-list::-webkit-scrollbar { width: 6px; }
       #prompts-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
       #prompts-list::-webkit-scrollbar-thumb:hover { background: #aaa; }
       
-      .pn-empty-message {
-        text-align: center;
-        color: var(--pn-text-secondary);
-        font-size: 14px;
-        margin-top: 40px;
-        font-style: italic;
-      }
+      .pn-empty-message { text-align: center; color: var(--pn-text-secondary); font-size: 14px; margin-top: 40px; font-style: italic; }
       
       .pn-prompt-item {
-        border: 1px solid transparent;
-        border-bottom: 1px solid var(--pn-border);
-        padding: 15px 10px;
-        margin-bottom: 4px;
-        background: transparent;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        border-radius: 8px;
+        border: 1px solid transparent; border-bottom: 1px solid var(--pn-border);
+        padding: 15px 10px; margin-bottom: 4px; background: transparent;
+        display: flex; flex-direction: column; gap: 8px; border-radius: 8px;
         transition: background-color 0.2s, border-color 0.2s;
       }
-      .pn-prompt-item:hover {
-          background-color: var(--pn-surface);
-          border-color: var(--pn-border);
-      }
-      .pn-prompt-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-      }
+      .pn-prompt-item:hover { background-color: var(--pn-surface); border-color: var(--pn-border); }
+      .pn-prompt-header { display: flex; justify-content: space-between; align-items: flex-start; }
       .pn-prompt-keyword {
-        font-weight: 600;
-        color: var(--pn-primary);
-        font-size: 14px;
-        background-color: #eef2f7;
-        padding: 4px 8px;
-        border-radius: 4px;
+        font-weight: 600; color: var(--pn-primary); font-size: 14px;
+        background-color: #eef2f7; padding: 4px 8px; border-radius: 4px;
         align-self: flex-start;
       }
-      .pn-prompt-content {
-        color: var(--pn-text);
-        font-size: 14px;
-        line-height: 1.5;
-        word-wrap: break-word;
-        padding-left: 2px;
-      }
-      .pn-prompt-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        opacity: 0; /* Hidden by default */
-        transition: opacity 0.2s ease-in-out;
-      }
-      .pn-prompt-item:hover .pn-prompt-actions {
-        opacity: 1; /* Visible on hover */
-      }
+      .pn-prompt-content { color: var(--pn-text); font-size: 14px; line-height: 1.5; word-wrap: break-word; padding-left: 2px; }
+      .pn-prompt-actions { display: flex; gap: 10px; align-items: center; opacity: 0; transition: opacity 0.2s ease-in-out; }
+      .pn-prompt-item:hover .pn-prompt-actions { opacity: 1; }
       .pn-icon-button {
-        background: none; border: none; padding: 4px; cursor: pointer;
-        border-radius: 50%; display: flex; align-items: center;
-        justify-content: center; width: 28px; height: 28px;
-        transition: background-color 0.2s;
+        background: none; border: none; padding: 4px; cursor: pointer; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; transition: background-color 0.2s;
       }
       .pn-icon-button:hover { background-color: #e0e6ed; }
       .pn-icon-button svg { width: 18px; height: 18px; }
       .pn-icon-button.edit svg { fill: var(--pn-success); }
       .pn-icon-button.delete svg { fill: var(--pn-danger); }
 
-      /* Edit Modal */
+      /* Edit Modal (sits on top of the main modal) */
       .pn-modal-backdrop {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 10001;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        visibility: hidden;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.4); z-index: 10001; /* Higher z-index */
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden;
         transition: opacity 0.2s, visibility 0.2s;
       }
-      .pn-modal-backdrop.active {
-        opacity: 1;
-        visibility: visible;
-      }
+      .pn-modal-backdrop.active { opacity: 1; visibility: visible; }
       .pn-modal-content {
-        background: var(--pn-surface);
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        width: 90%;
-        max-width: 420px;
-        transform: scale(0.95);
-        transition: transform 0.2s;
+        background: var(--pn-surface); padding: 24px; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); width: 90%; max-width: 420px;
+        transform: scale(0.95); transition: transform 0.2s;
       }
-      .pn-modal-backdrop.active .pn-modal-content {
-          transform: scale(1);
-      }
-      .pn-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-      }
-      .pn-modal-header h3 {
-          margin: 0;
-          font-size: 18px;
-          color: var(--pn-text);
-      }
-      .pn-modal-actions {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-          margin-top: 16px;
-      }
+      .pn-modal-backdrop.active .pn-modal-content { transform: scale(1); }
+      .pn-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      .pn-modal-header h3 { margin: 0; font-size: 18px; color: var(--pn-text); }
+      .pn-modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; }
     `;
     document.head.appendChild(style);
   }
 
   private createContainer(): HTMLDivElement {
-    const container = document.createElement('div');
-    container.id = 'prompt-nest-extension';
+    const backdrop = document.createElement('div');
+    backdrop.id = 'prompt-nest-extension';
 
-    this.createHeader(container);
-    this.createAddPromptForm(container);
-    this.createPromptsList(container);
-    this.createEditModal(container); // Create the modal structure once
+    const modalContent = document.createElement('div');
+    modalContent.className = 'pn-main-modal';
 
-    return container;
+    // Build the UI inside the modal content wrapper
+    this.createHeader(modalContent);
+    this.createAddPromptForm(modalContent);
+    this.createPromptsList(modalContent);
+
+    // The edit modal is a separate overlay, attach it to the main backdrop
+    this.createEditModal(backdrop);
+    
+    backdrop.appendChild(modalContent);
+
+    // Add logic to close when clicking the backdrop (but not the content)
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+            this.hide();
+        }
+    });
+
+    return backdrop;
   }
 
   private createHeader(container: HTMLDivElement): void {
@@ -333,6 +235,7 @@ export class PromptUI {
     newPromptButton.textContent = 'New Prompt';
     newPromptButton.className = 'pn-button pn-button-primary';
     newPromptButton.addEventListener('click', () => {
+        // Use the main container to find the form
         this.container.querySelector('.pn-form-container')?.classList.toggle('active');
     });
 
@@ -544,7 +447,8 @@ export class PromptUI {
   public show(): void {
     if (!this.isVisible) {
       document.body.appendChild(this.container);
-      setTimeout(() => this.container.classList.add('pn-open'), 10); // small delay for transition
+      // Small delay for the opacity transition to trigger correctly
+      setTimeout(() => this.container.classList.add('pn-open'), 10); 
       this.isVisible = true;
       this.loadPrompts();
     }
@@ -553,8 +457,8 @@ export class PromptUI {
   public hide(): void {
     if (this.isVisible) {
       this.container.classList.remove('pn-open');
-      // Optional: remove from DOM after transition
-      // setTimeout(() => this.container.remove(), 300); 
+      // Optional: remove from DOM after transition completes
+      // setTimeout(() => this.container.remove(), 400);
       this.isVisible = false;
     }
   }
