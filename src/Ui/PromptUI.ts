@@ -1,4 +1,4 @@
-// UI Component for Prompt Management (Updated with duplicate prevention and UI fix)
+// UI Component for Prompt Management (Updated with duplicate prevention, UI fix, and bulk import)
 import { PromptManager, Prompt } from '../services/PromptManager';
 import CustomAlert from './CustomAlert';
 
@@ -33,6 +33,7 @@ export class PromptUI {
         --pn-border: #e0e6ed;
         --pn-success: #4caf50;
         --pn-danger: #f44336;
+        --pn-warning: #ff9800;
         --pn-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
         --pn-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       }
@@ -173,7 +174,7 @@ export class PromptUI {
       .pn-icon-button.edit svg { fill: var(--pn-success); }
       .pn-icon-button.delete svg { fill: var(--pn-danger); }
 
-      /* Edit Modal (sits on top of the main modal) */
+      /* Generic Modal (sits on top of the main modal) */
       .pn-modal-backdrop {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.4); z-index: 10001;
@@ -184,13 +185,23 @@ export class PromptUI {
       .pn-modal-backdrop.active { opacity: 1; visibility: visible; }
       .pn-modal-content {
         background: var(--pn-surface); padding: 24px; border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); width: 90%; max-width: 420px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); width: 90%; max-width: 500px;
         transform: scale(0.95); transition: transform 0.2s;
       }
       .pn-modal-backdrop.active .pn-modal-content { transform: scale(1); }
       .pn-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
       .pn-modal-header h3 { margin: 0; font-size: 18px; color: var(--pn-text); }
       .pn-modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; }
+
+      /* Import Modal Specifics */
+      #pn-import-modal .pn-textarea { min-height: 150px; }
+      .pn-import-instructions {
+          font-size: 13px; color: var(--pn-text-secondary); background-color: var(--pn-background);
+          padding: 12px; border-radius: 6px; margin-bottom: 15px; line-height: 1.6;
+      }
+      .pn-import-instructions code {
+          background-color: #e0e6ed; padding: 2px 5px; border-radius: 4px; font-weight: 600;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -204,6 +215,7 @@ export class PromptUI {
     this.createAddPromptForm(modalContent);
     this.createPromptsList(modalContent);
     this.createEditModal(backdrop);
+    this.createImportModal(backdrop); // <-- ADDED
     backdrop.appendChild(modalContent);
     backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
@@ -221,17 +233,27 @@ export class PromptUI {
     title.className = 'pn-title';
     const headerActions = document.createElement('div');
     headerActions.className = 'pn-header-actions';
+    
+    // -- IMPORT BUTTON (NEW) ---
+    const importButton = document.createElement('button');
+    importButton.textContent = 'Import';
+    importButton.className = 'pn-button pn-button-secondary';
+    importButton.addEventListener('click', () => this.showImportModal());
+    
     const newPromptButton = document.createElement('button');
     newPromptButton.textContent = 'New Prompt';
     newPromptButton.className = 'pn-button pn-button-primary';
     newPromptButton.addEventListener('click', () => {
         this.container.querySelector('.pn-form-container')?.classList.toggle('active');
     });
+    
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '&times;';
     closeButton.className = 'pn-close-button';
     closeButton.title = 'Close';
     closeButton.addEventListener('click', () => this.hide());
+    
+    headerActions.appendChild(importButton); // <-- ADDED
     headerActions.appendChild(newPromptButton);
     headerActions.appendChild(closeButton);
     header.appendChild(title);
@@ -365,7 +387,7 @@ export class PromptUI {
       modalBackdrop.className = 'pn-modal-backdrop';
       modalBackdrop.id = 'pn-edit-modal';
       modalBackdrop.innerHTML = `
-        <div class="pn-modal-content">
+        <div class="pn-modal-content" style="max-width: 420px;">
             <div class="pn-modal-header">
                 <h3>Edit Prompt</h3>
                 <button class="pn-close-button">&times;</button>
@@ -391,6 +413,111 @@ export class PromptUI {
           }
       });
       container.appendChild(modalBackdrop);
+  }
+
+  // --- NEW: BULK IMPORT MODAL ---
+  private createImportModal(container: HTMLDivElement): void {
+      const modalBackdrop = document.createElement('div');
+      modalBackdrop.className = 'pn-modal-backdrop';
+      modalBackdrop.id = 'pn-import-modal';
+      modalBackdrop.innerHTML = `
+        <div class="pn-modal-content">
+            <div class="pn-modal-header">
+                <h3>Bulk Import Prompts</h3>
+                <button class="pn-close-button">&times;</button>
+            </div>
+            <div class="pn-import-instructions">
+              Paste your prompts below. Each prompt must be on a new line in the format:<br><code>::keyword,The prompt content here</code>
+            </div>
+            <form id="pn-import-form">
+                <textarea class="pn-textarea" name="bulk-content" placeholder="::summary,Summarize this for me.\n::rewrite,Rewrite this paragraph to be more professional."></textarea>
+                <div class="pn-modal-actions">
+                    <button type="button" class="pn-button pn-button-secondary" id="pn-import-cancel">Cancel</button>
+                    <button type="submit" class="pn-button pn-button-primary">Import Prompts</button>
+                </div>
+            </form>
+        </div>
+      `;
+      
+      const closeModal = () => modalBackdrop.classList.remove('active');
+      modalBackdrop.querySelector('.pn-close-button')?.addEventListener('click', closeModal);
+      modalBackdrop.querySelector('#pn-import-cancel')?.addEventListener('click', closeModal);
+      
+      const form = modalBackdrop.querySelector<HTMLFormElement>('#pn-import-form');
+      form?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleBulkImport();
+      });
+
+      container.appendChild(modalBackdrop);
+  }
+
+  private async handleBulkImport(): Promise<void> {
+      const modal = this.container.querySelector<HTMLDivElement>('#pn-import-modal');
+      const textarea = modal?.querySelector<HTMLTextAreaElement>('textarea[name="bulk-content"]');
+      if (!textarea) return;
+
+      const text = textarea.value.trim();
+      if (!text) {
+          CustomAlert.show('The text area is empty.', { title: 'Nothing to Import', type: 'info' });
+          return;
+      }
+      
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const promptsToCreate: { keyword: string, content: string }[] = [];
+      const errors: string[] = [];
+      
+      // Use sets for efficient duplicate checking
+      const existingKeywords = new Set(this.prompts.map(p => p.keyword.toLowerCase()));
+      const importKeywords = new Set<string>();
+
+      lines.forEach((line, index) => {
+          const delimiterIndex = line.indexOf(',');
+          if (delimiterIndex === -1) {
+              errors.push(`Line ${index + 1}: Missing comma delimiter.`);
+              return;
+          }
+
+          const keyword = line.substring(0, delimiterIndex).trim();
+          const content = line.substring(delimiterIndex + 1).trim();
+
+          // Validation
+          if (!keyword || !content) {
+              errors.push(`Line ${index + 1}: Keyword or content is empty.`);
+          } else if (!keyword.startsWith('::')) {
+              errors.push(`Line ${index + 1}: Keyword "${keyword}" must start with ::`);
+          } else if (existingKeywords.has(keyword.toLowerCase())) {
+              errors.push(`Line ${index + 1}: Keyword "${keyword}" already exists.`);
+          } else if (importKeywords.has(keyword.toLowerCase())) {
+              errors.push(`Line ${index + 1}: Keyword "${keyword}" is duplicated within your import data.`);
+          } else {
+              promptsToCreate.push({ keyword, content });
+              importKeywords.add(keyword.toLowerCase());
+          }
+      });
+      
+      if (promptsToCreate.length > 0) {
+        try {
+            for (const p of promptsToCreate) {
+                await this.promptManager.createPrompt(p.keyword, p.content);
+            }
+            CustomAlert.show(`Successfully imported ${promptsToCreate.length} prompts.`, { type: 'success' });
+        } catch(e) {
+            CustomAlert.show(`An error occurred during import: ${e}`, { type: 'error' });
+        }
+      }
+
+      if (errors.length > 0) {
+        const errorMsg = `Skipped ${errors.length} prompts due to errors. First error: ${errors[0]}`;
+        CustomAlert.show(errorMsg, { title: 'Import Issues', type: 'warning', autoCloseMs: 6000 });
+      }
+
+      // Close modal and refresh list if any prompts were successfully processed
+      if (promptsToCreate.length > 0) {
+          modal?.classList.remove('active');
+          textarea.value = ''; // Clear textarea
+          await this.loadPrompts();
+      }
   }
   
   private showEditModal(prompt: Prompt): void {
@@ -421,11 +548,19 @@ export class PromptUI {
           }
       };
 
+      // A trick to replace the existing event listener without holding multiple references
       form.removeEventListener('submit', (form as any).__handleSubmit__);
       form.addEventListener('submit', handleSubmit);
       (form as any).__handleSubmit__ = handleSubmit;
 
       modal.classList.add('active');
+  }
+
+  private showImportModal(): void {
+    const modal = this.container.querySelector<HTMLDivElement>('#pn-import-modal');
+    if (modal) {
+        modal.classList.add('active');
+    }
   }
 
   // --- Public Methods ---
