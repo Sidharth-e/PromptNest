@@ -1,5 +1,6 @@
 // UI Component for Prompt Management (Updated with duplicate prevention and UI fix)
 import { PromptManager, Prompt } from '../services/PromptManager';
+import CustomAlert from './CustomAlert';
 
 export class PromptUI {
   private container: HTMLDivElement;
@@ -265,17 +266,17 @@ export class PromptUI {
       // --- VALIDATION 1: Duplicate Check ---
       const isDuplicate = this.prompts.some(p => p.keyword.toLowerCase() === keyword.toLowerCase());
       if (isDuplicate) {
-          alert(`The keyword "${keyword}" already exists. Please choose a unique keyword.`);
+          CustomAlert.show(`The keyword "${keyword}" already exists. Please choose a unique keyword.`, { title: 'Duplicate Keyword', type: 'warning', autoCloseMs: 3500 });
           return;
       }
       
       // --- VALIDATION 2: Content Check ---
       if (!keyword || !content) {
-        alert('Please fill in both keyword and content.');
+        CustomAlert.show('Please fill in both keyword and content.', { title: 'Missing Fields', type: 'warning', autoCloseMs: 3000 });
         return;
       }
       if (!keyword.startsWith('::')) {
-        alert('Keyword must start with ::');
+        CustomAlert.show('Keyword must start with ::', { title: 'Invalid Keyword', type: 'info', autoCloseMs: 3000 });
         return;
       }
 
@@ -286,7 +287,7 @@ export class PromptUI {
         formContainer.classList.remove('active'); // Hide form on success
         await this.loadPrompts();
       } catch (error) {
-        alert('Error adding prompt: ' + error);
+        CustomAlert.show('Error adding prompt: ' + error, { title: 'Add Failed', type: 'error' });
       }
     });
 
@@ -351,7 +352,7 @@ export class PromptUI {
           await this.promptManager.deletePrompt(prompt.id);
           await this.loadPrompts();
         } catch (error) {
-          alert('Error deleting prompt: ' + error);
+          CustomAlert.show('Error deleting prompt: ' + error, { title: 'Delete Failed', type: 'error' });
         }
       }
     });
@@ -408,7 +409,7 @@ export class PromptUI {
           const newKeyword = keywordInput?.value.trim() ?? '';
           const newContent = contentInput?.value.trim() ?? '';
           if (!newKeyword || !newContent) {
-              alert('Please provide both keyword and content.');
+              CustomAlert.show('Please provide both keyword and content.', { title: 'Missing Fields', type: 'warning', autoCloseMs: 3000 });
               return;
           }
           try {
@@ -416,7 +417,7 @@ export class PromptUI {
               modal.classList.remove('active');
               await this.loadPrompts();
           } catch (error) {
-              alert('Error updating prompt: ' + error);
+              CustomAlert.show('Error updating prompt: ' + error, { title: 'Update Failed', type: 'error' });
           }
       };
 
