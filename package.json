@@ -4,7 +4,7 @@
   "description": "PROMPTNEST is a browser extension that helps you create and manage your prompts.",
   "main": "index.js",
   "scripts": {
-    "build": "node build-script.js",
+    "build": "node scripts/build-script.js",
     "clean": "rimraf dist build",
     "dev": "tsc --watch"
   },
