@@ -1,4 +1,4 @@
-// UI Component for Prompt Management (Refactored for Full Right-Side Slide-in)
+// UI Component for Prompt Management (Updated with duplicate prevention and UI fix)
 import { PromptManager, Prompt } from '../services/PromptManager';
 
 export class PromptUI {
@@ -63,7 +63,7 @@ export class PromptUI {
         visibility: visible;
       }
 
-      /* Main Modal Content Box - Updated for full slide-from-right animation */
+      /* Main Modal Content Box */
       .pn-main-modal {
         background: var(--pn-background);
         border-radius: 12px;
@@ -76,13 +76,13 @@ export class PromptUI {
         color: var(--pn-text);
         overflow: hidden;
         opacity: 0;
-        transform: translateX(100vw); /* Start fully off-screen to the right */
-        transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-out;
+        transform: translateX(100vw);
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-out;
       }
 
       #prompt-nest-extension.pn-open .pn-main-modal {
         opacity: 1;
-        transform: translateX(0); /* Animate to final centered position */
+        transform: translateX(0);
       }
 
       /* Header */
@@ -104,7 +104,7 @@ export class PromptUI {
       }
       .pn-close-button:hover { background-color: #eef2f7; color: var(--pn-text); }
 
-      /* Form Container (Collapsible) */
+      /* Form Container (Collapsible) - UI FIX ADDED */
       .pn-form-container {
         background: var(--pn-surface);
         border-bottom: 1px solid var(--pn-border);
@@ -113,6 +113,7 @@ export class PromptUI {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+        flex-shrink: 0; /* Prevents the form from being squished by the list */
       }
       .pn-form-container.active { padding: 20px 24px; max-height: 500px; }
       .pn-form h3 { margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: var(--pn-text); }
@@ -174,7 +175,7 @@ export class PromptUI {
       /* Edit Modal (sits on top of the main modal) */
       .pn-modal-backdrop {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.4); z-index: 10001; /* Higher z-index */
+        background: rgba(0, 0, 0, 0.4); z-index: 10001;
         display: flex; align-items: center; justify-content: center;
         opacity: 0; visibility: hidden;
         transition: opacity 0.2s, visibility 0.2s;
@@ -196,55 +197,40 @@ export class PromptUI {
   private createContainer(): HTMLDivElement {
     const backdrop = document.createElement('div');
     backdrop.id = 'prompt-nest-extension';
-
     const modalContent = document.createElement('div');
     modalContent.className = 'pn-main-modal';
-
-    // Build the UI inside the modal content wrapper
     this.createHeader(modalContent);
     this.createAddPromptForm(modalContent);
     this.createPromptsList(modalContent);
-
-    // The edit modal is a separate overlay, attach it to the main backdrop
     this.createEditModal(backdrop);
-    
     backdrop.appendChild(modalContent);
-
-    // Add logic to close when clicking the backdrop (but not the content)
     backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
             this.hide();
         }
     });
-
     return backdrop;
   }
 
   private createHeader(container: HTMLDivElement): void {
     const header = document.createElement('div');
     header.className = 'pn-header';
-
     const title = document.createElement('h2');
     title.textContent = 'PromptNest';
     title.className = 'pn-title';
-
     const headerActions = document.createElement('div');
     headerActions.className = 'pn-header-actions';
-
     const newPromptButton = document.createElement('button');
     newPromptButton.textContent = 'New Prompt';
     newPromptButton.className = 'pn-button pn-button-primary';
     newPromptButton.addEventListener('click', () => {
-        // Use the main container to find the form
         this.container.querySelector('.pn-form-container')?.classList.toggle('active');
     });
-
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '&times;';
     closeButton.className = 'pn-close-button';
     closeButton.title = 'Close';
     closeButton.addEventListener('click', () => this.hide());
-    
     headerActions.appendChild(newPromptButton);
     headerActions.appendChild(closeButton);
     header.appendChild(title);
@@ -276,6 +262,14 @@ export class PromptUI {
       const keyword = keywordInput?.value.trim() ?? '';
       const content = contentInput?.value.trim() ?? '';
 
+      // --- VALIDATION 1: Duplicate Check ---
+      const isDuplicate = this.prompts.some(p => p.keyword.toLowerCase() === keyword.toLowerCase());
+      if (isDuplicate) {
+          alert(`The keyword "${keyword}" already exists. Please choose a unique keyword.`);
+          return;
+      }
+      
+      // --- VALIDATION 2: Content Check ---
       if (!keyword || !content) {
         alert('Please fill in both keyword and content.');
         return;
@@ -347,7 +341,6 @@ export class PromptUI {
         <div class="pn-prompt-content">${prompt.content}</div>
     `;
 
-    // --- Event Listeners ---
     item.querySelector('.edit')?.addEventListener('click', () => {
         this.showEditModal(prompt);
     });
@@ -370,7 +363,6 @@ export class PromptUI {
       const modalBackdrop = document.createElement('div');
       modalBackdrop.className = 'pn-modal-backdrop';
       modalBackdrop.id = 'pn-edit-modal';
-      
       modalBackdrop.innerHTML = `
         <div class="pn-modal-content">
             <div class="pn-modal-header">
@@ -389,19 +381,14 @@ export class PromptUI {
             </form>
         </div>
       `;
-      
-      // Close modal events
       const closeModal = () => modalBackdrop.classList.remove('active');
       modalBackdrop.querySelector('.pn-close-button')?.addEventListener('click', closeModal);
       modalBackdrop.querySelector('#pn-edit-cancel')?.addEventListener('click', closeModal);
-      
-      // Close on backdrop click
       modalBackdrop.addEventListener('click', (e) => {
           if (e.target === modalBackdrop) {
               closeModal();
           }
       });
-
       container.appendChild(modalBackdrop);
   }
   
@@ -413,11 +400,9 @@ export class PromptUI {
       const keywordInput = form.querySelector<HTMLInputElement>('input[name="keyword"]');
       const contentInput = form.querySelector<HTMLTextAreaElement>('textarea[name="content"]');
 
-      // Populate form with existing prompt data
       if (keywordInput) keywordInput.value = prompt.keyword;
       if (contentInput) contentInput.value = prompt.content;
 
-      // Handle form submission
       const handleSubmit = async (e: Event) => {
           e.preventDefault();
           const newKeyword = keywordInput?.value.trim() ?? '';
@@ -435,10 +420,9 @@ export class PromptUI {
           }
       };
 
-      // We remove and re-add the listener to ensure it captures the correct 'prompt' object
       form.removeEventListener('submit', (form as any).__handleSubmit__);
       form.addEventListener('submit', handleSubmit);
-      (form as any).__handleSubmit__ = handleSubmit; // Store reference for removal
+      (form as any).__handleSubmit__ = handleSubmit;
 
       modal.classList.add('active');
   }
@@ -447,7 +431,6 @@ export class PromptUI {
   public show(): void {
     if (!this.isVisible) {
       document.body.appendChild(this.container);
-      // Small delay for the opacity transition to trigger correctly
       setTimeout(() => this.container.classList.add('pn-open'), 10); 
       this.isVisible = true;
       this.loadPrompts();
@@ -457,8 +440,6 @@ export class PromptUI {
   public hide(): void {
     if (this.isVisible) {
       this.container.classList.remove('pn-open');
-      // Optional: remove from DOM after transition completes
-      // setTimeout(() => this.container.remove(), 400);
       this.isVisible = false;
     }
   }
