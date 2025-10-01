@@ -235,7 +235,7 @@ export class PromptUI {
   }
 
   private renderPrompts(): void {
-    const listContainer = document.getElementById('prompts-list');
+    const listContainer = this.container.querySelector('#prompts-list');
     if (!listContainer) return;
 
     listContainer.innerHTML = '';
@@ -347,10 +347,10 @@ export class PromptUI {
   }
 
   private editPrompt(prompt: Prompt): void {
-    const newKeyword = prompt(`Edit keyword for "${prompt.keyword}":`, prompt.keyword);
+    const newKeyword = window.prompt(`Edit keyword for "${prompt.keyword}":`, prompt.keyword);
     if (newKeyword === null) return;
 
-    const newContent = prompt(`Edit content:`, prompt.content);
+    const newContent = window.prompt(`Edit content:`, prompt.content);
     if (newContent === null) return;
 
     this.promptManager.updatePrompt(prompt.id, newKeyword, newContent)
@@ -363,6 +363,8 @@ export class PromptUI {
       document.body.appendChild(this.container);
       this.container.style.display = 'block';
       this.isVisible = true;
+      // Ensure prompts are loaded and rendered when UI becomes visible
+      this.loadPrompts();
     }
   }
 

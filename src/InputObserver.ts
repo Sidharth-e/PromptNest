@@ -4,7 +4,7 @@ import { PromptManager } from './PromptManager';
 export class InputObserver {
   private promptManager: PromptManager;
   private observer: MutationObserver | null = null;
-  private inputListeners: Map<HTMLInputElement | HTMLTextAreaElement, (event: Event) => void> = new Map();
+  private inputListeners: Map<HTMLTextAreaElement, (event: Event) => void> = new Map();
 
   constructor() {
     this.promptManager = new PromptManager();
@@ -21,7 +21,7 @@ export class InputObserver {
             this.attachListenersToElement(element);
             
             // Also check child elements
-            const inputs = element.querySelectorAll('input, textarea');
+            const inputs = element.querySelectorAll('textarea');
             inputs.forEach(input => this.attachListenersToElement(input));
           }
         });
@@ -38,23 +38,15 @@ export class InputObserver {
   }
 
   private attachListenersToExistingElements(): void {
-    const inputs = document.querySelectorAll('input, textarea');
+    const inputs = document.querySelectorAll('textarea');
     inputs.forEach(input => this.attachListenersToElement(input));
   }
 
   private attachListenersToElement(element: Element): void {
-    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+    if (element instanceof HTMLTextAreaElement) {
       // Skip if already has listener
       if (this.inputListeners.has(element)) {
         return;
-      }
-
-      // Skip certain input types that shouldn't be monitored
-      if (element instanceof HTMLInputElement) {
-        const skipTypes = ['password', 'hidden', 'submit', 'button', 'reset', 'checkbox', 'radio', 'file'];
-        if (skipTypes.includes(element.type.toLowerCase())) {
-          return;
-        }
       }
 
       const listener = this.createInputListener(element);
@@ -63,9 +55,9 @@ export class InputObserver {
     }
   }
 
-  private createInputListener(element: HTMLInputElement | HTMLTextAreaElement): (event: Event) => void {
+  private createInputListener(element: HTMLTextAreaElement): (event: Event) => void {
     return async (event: Event) => {
-      const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+      const target = event.target as HTMLTextAreaElement;
       const value = target.value;
       
       // Look for keyword patterns (::keyword)
@@ -95,7 +87,7 @@ export class InputObserver {
     };
   }
 
-  private showFeedback(element: HTMLInputElement | HTMLTextAreaElement, message: string): void {
+  private showFeedback(element: HTMLTextAreaElement, message: string): void {
     // Create a temporary feedback element
     const feedback = document.createElement('div');
     feedback.textContent = message;
