@@ -1,6 +1,6 @@
 // Content script for PromptNest Extension
-import { PromptUI } from './PromptUI';
-import { InputObserver } from './InputObserver';
+import { PromptUI } from './Ui/PromptUI';
+import { InputObserver } from './observers/InputObserver';
 
 // Initialize the extension components
 const promptUI = new PromptUI();

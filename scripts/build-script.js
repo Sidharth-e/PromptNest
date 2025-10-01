@@ -27,10 +27,9 @@ async function run() {
     entryPoints: [
       'src/background.ts',
       'src/content.ts',
-      'src/InputObserver.ts',
-      'src/PromptManager.ts',
-      'src/PromptUI.ts',
-      'src/Ui/popup.ts'
+      'src/observers/InputObserver.ts',
+      'src/services/PromptManager.ts',
+      'src/Ui/promptUi.ts'
     ],
     outdir: distDir,
     bundle: true,

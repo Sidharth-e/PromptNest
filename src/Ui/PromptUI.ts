@@ -1,5 +1,5 @@
 // UI Component for Prompt Management
-import { PromptManager, Prompt } from './PromptManager';
+import { PromptManager, Prompt } from '../services/PromptManager';
 
 export class PromptUI {
   private container: HTMLDivElement;

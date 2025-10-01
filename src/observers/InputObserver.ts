@@ -1,5 +1,5 @@
 // Input Observer for detecting keyword typing and auto-filling prompts
-import { PromptManager } from './PromptManager';
+import { PromptManager } from '../services/PromptManager';
 
 export class InputObserver {
   private promptManager: PromptManager;
@@ -228,3 +228,5 @@ export class InputObserver {
     this.startObserving();
   }
 }
+
+
