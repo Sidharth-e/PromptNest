@@ -25,46 +25,48 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-// Add a floating toggle button for easier access
+// Add a slim sidebar toggle for easier access
 const createToggleButton = () => {
-  const toggleButton = document.createElement('button');
-  toggleButton.innerHTML = '📝';
-  toggleButton.title = 'PromptNest (Ctrl+Shift+P)';
-  toggleButton.style.cssText = `
+  const sidebarToggle = document.createElement('div');
+  sidebarToggle.id = 'pn-sidebar-toggle';
+  sidebarToggle.title = 'PromptNest (Ctrl+Shift+P)';
+  sidebarToggle.style.cssText = `
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 120px;
     background: #007acc;
     color: white;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
     z-index: 9999;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   `;
 
-  toggleButton.addEventListener('mouseenter', () => {
-    toggleButton.style.transform = 'scale(1.1)';
-    toggleButton.style.backgroundColor = '#005a9e';
+  // Add a subtle chevron
+  sidebarToggle.innerHTML = `<svg viewBox="0 0 24 24" width="10" height="10" fill="#ffffff"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L12.17 11l-2.88 2.88a1 1 0 1 0 1.42 1.41l3.59-3.59a1 1 0 0 0 0-1.41L10.71 6.7a1 1 0 0 0-1.42.01z"/></svg>`;
+
+  sidebarToggle.addEventListener('mouseenter', () => {
+    sidebarToggle.style.width = '16px';
+    sidebarToggle.style.backgroundColor = '#005a9e';
   });
 
-  toggleButton.addEventListener('mouseleave', () => {
-    toggleButton.style.transform = 'scale(1)';
-    toggleButton.style.backgroundColor = '#007acc';
+  sidebarToggle.addEventListener('mouseleave', () => {
+    sidebarToggle.style.width = '14px';
+    sidebarToggle.style.backgroundColor = '#007acc';
   });
 
-  toggleButton.addEventListener('click', () => {
+  sidebarToggle.addEventListener('click', () => {
     promptUI.toggle();
   });
 
-  document.body.appendChild(toggleButton);
+  document.body.appendChild(sidebarToggle);
 };
 
 // Add the toggle button when the page is ready
